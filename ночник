@@ -1,0 +1,167 @@
+#include <IRremote.h>
+
+const int rTriggerPin = 8;
+const int rEchoPin = 7;
+const int gTriggerPin = 10;
+const int gEchoPin = 9;
+const int bTriggerPin = 12;
+const int bEchoPin = 11;
+
+const int receiverPin = 4;
+
+const int rLedPin = 3;
+const int gLedPin = 5;
+const int bLedPin = 6;
+
+int on = 0;
+
+IRrecv irrecv(receiverPin);
+decode_results results;
+
+void checkColor(int triggerPin, int echoPin, int ledPin, char* color) {
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  
+  int distance = pulseIn(echoPin, HIGH);
+  int sm = distance/29/2;
+  if (sm >= 0 && sm <= 30) {
+    if (sm > 25)
+      analogWrite(ledPin, 0);
+    else
+      analogWrite(ledPin, 255 - (sm*10));
+
+    Serial.println(color);
+    Serial.println(sm);
+  }
+}
+
+void setup() {
+  Serial.begin(9600);  
+  irrecv.enableIRIn();
+  
+  pinMode(rTriggerPin, OUTPUT);
+  pinMode(rEchoPin, INPUT);
+  pinMode(gTriggerPin, OUTPUT);
+  pinMode(gEchoPin, INPUT);
+  pinMode(bTriggerPin, OUTPUT);
+  pinMode(bEchoPin, INPUT);
+
+  pinMode(rLedPin, OUTPUT);
+  pinMode(gLedPin, OUTPUT);
+  pinMode(bLedPin, OUTPUT);
+}
+
+void loop() {  
+  checkColor(rTriggerPin, rEchoPin, rLedPin, "red");
+  checkColor(gTriggerPin, gEchoPin, gLedPin, "green");
+  checkColor(bTriggerPin, bEchoPin, bLedPin, "blue");
+
+  if (irrecv.decode(&results)) {
+    switch (results.value) {
+      case 16724175: {
+        analogWrite(rLedPin, 255);
+        analogWrite(gLedPin, 0);
+        analogWrite(bLedPin, 0);
+        break;
+      }
+      case 16718055: {
+        analogWrite(rLedPin, 0);
+        analogWrite(gLedPin, 255);
+        analogWrite(bLedPin, 0);
+        break;
+      }
+      case 16743045: {
+        analogWrite(rLedPin, 0);
+        analogWrite(gLedPin, 0);
+        analogWrite(bLedPin, 255);
+        break;
+      }
+      case 16736925: {
+        if(on) {
+          analogWrite(rLedPin, 0);
+          analogWrite(gLedPin, 0);
+          analogWrite(bLedPin, 0);
+          on = 0;
+        }
+        else {
+          analogWrite(rLedPin, 255);
+          analogWrite(gLedPin, 255);
+          analogWrite(bLedPin, 255);
+          on = 1;
+        }
+        break;
+      }
+      case 16738455: {
+        int r = 0, g = 0, b = 255;
+        analogWrite(bLedPin, b);      
+        analogWrite(gLedPin, g);      
+        analogWrite(rLedPin, r);
+        delay(500);
+        for(r = 0; r < 255; r++) {
+          analogWrite(bLedPin, b);      
+          analogWrite(gLedPin, g);      
+          analogWrite(rLedPin, r);
+          Serial.println(r);
+          Serial.println(g);
+          Serial.println(b);
+          delay(100);
+        }
+        for(b = 0; b < 255; b++) {
+          analogWrite(bLedPin, 255 - b);
+          analogWrite(rLedPin, r);      
+          analogWrite(gLedPin, g);
+          Serial.println(r);
+          Serial.println(g);
+          Serial.println(b);
+          delay(100);
+        }
+        b = 0;
+        for(g = 0; g < 255; g++) {
+          analogWrite(bLedPin, b);      
+          analogWrite(gLedPin, g);      
+          analogWrite(rLedPin, r);
+          Serial.println(r);
+          Serial.println(g);
+          Serial.println(b);
+          delay(100);
+        }
+        for(r = 0; r < 255; r++) {
+          analogWrite(rLedPin, 255 - r);    
+          analogWrite(gLedPin, g);      
+          analogWrite(bLedPin, b);
+          Serial.println(r);
+          Serial.println(g);
+          Serial.println(b);
+          delay(100);
+        }
+        r = 0;
+        for(b = 0; b < 255; b++) {
+          analogWrite(bLedPin, b);      
+          analogWrite(gLedPin, g);      
+          analogWrite(rLedPin, r);
+          Serial.println(r);
+          Serial.println(g);
+          Serial.println(b);
+          delay(100);
+        }
+        for(g = 0; g < 255; g++) {
+          analogWrite(gLedPin, 255 - g);
+          analogWrite(bLedPin, b);       
+          analogWrite(rLedPin, r);
+          Serial.println(r);
+          Serial.println(g);
+          Serial.println(b);
+          delay(100);
+        }
+        g = 0;
+        break;
+      }
+    }
+    
+    Serial.println(results.value);
+    irrecv.resume();
+  }
+  
+  delay(100);  
+}
